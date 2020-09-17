@@ -45,6 +45,21 @@ public class FutureAdapter<V> implements Future<V> {
         this.future = future;
     }
 
+    public FutureAdapter(ResponseFuture responseFuture) {
+        this.future = new CompletableFuture<>();
+        responseFuture.setCallback(new ResponseCallback() {
+            @Override
+            public void done(Object response) {
+                future.complete(response);
+            }
+
+            @Override
+            public void caught(Throwable exception) {
+                future.completeExceptionally(exception);
+            }
+        });
+    }
+
     public ResponseFuture getFuture() {
         return new ResponseFuture() {
             @Override
@@ -106,18 +121,22 @@ public class FutureAdapter<V> implements Future<V> {
         future.whenComplete(biConsumer);
     }
 
+    @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         return false;
     }
 
+    @Override
     public boolean isCancelled() {
         return false;
     }
 
+    @Override
     public boolean isDone() {
         return future.isDone();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public V get() throws InterruptedException, ExecutionException {
         try {
@@ -129,6 +148,7 @@ public class FutureAdapter<V> implements Future<V> {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         try {
